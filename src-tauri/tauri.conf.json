@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "DataBridge",
+  "version": "0.1.0",
+  "identifier": "com.databridge.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "DataBridge",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 700,
+        "resizable": true,
+        "decorations": true,
+        "transparent": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "trayIcon": {
+      "iconPath": "icons/tray-icon.png",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": false,
+      "title": "DataBridge",
+      "tooltip": "DataBridge — Market Data Bridge"
+    }
+  },
+  "plugins": {
+    "autostart": {
+      "mobile": false,
+      "desktop": true
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [],
+    "externalBin": [],
+    "copyright": "",
+    "category": "Utility",
+    "shortDescription": "Market data bridge for AmiBroker",
+    "longDescription": "DataBridge connects your broker's market data API to AmiBroker, providing historical and real-time 1-minute OHLCV data."
+  }
+}

@@ -178,7 +178,7 @@ impl LiveTickEngine {
         // For now, since WsHandle owns the sender, we poll via a small sleep loop
         // and check cmd_rx for control messages.
 
-        let mut cmd_rx = self.cmd_rx.lock().await;
+        let mut cmd_rx = self.cmd_rx.lock();
         let mut heartbeat_ticker = tokio::time::interval(Duration::from_secs(30));
 
         loop {

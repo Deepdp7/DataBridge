@@ -165,7 +165,7 @@ pub struct NewBar {
     pub source: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SymbolFilter {
     pub exchange: Option<String>,
     pub status: Option<SymbolStatus>,
@@ -270,7 +270,7 @@ pub struct NewBackfillGap {
     pub gap_end: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct BackfillGap {
     pub id: i64,
     pub symbol_id: i64,

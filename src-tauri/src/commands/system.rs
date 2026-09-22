@@ -59,10 +59,10 @@ fn set_windows_startup(enabled: bool) -> Result<(), String> {
         RegOpenKeyExW(
             HKEY_CURRENT_USER,
             PCWSTR(run_key.as_ptr()),
-            0,
+            Some(0),
             KEY_SET_VALUE,
             &mut hkey,
-        ).map_err(|e| format!("RegOpenKeyExW failed: {}", e))?;
+        ).ok().map_err(|e| format!("RegOpenKeyExW failed: {}", e))?;
 
         if enabled {
             let exe_path = std::env::current_exe()
@@ -76,13 +76,13 @@ fn set_windows_startup(enabled: bool) -> Result<(), String> {
             RegSetValueExW(
                 hkey,
                 PCWSTR(value_name.as_ptr()),
-                0,
+                Some(0),
                 REG_SZ,
                 Some(std::slice::from_raw_parts(
                     exe_str.as_ptr() as *const u8,
                     exe_str.len() * 2,
                 )),
-            ).map_err(|e| format!("RegSetValueExW failed: {}", e))?;
+            ).ok().map_err(|e| format!("RegSetValueExW failed: {}", e))?;
         } else {
             let _ = RegDeleteValueW(hkey, PCWSTR(value_name.as_ptr()));
         }

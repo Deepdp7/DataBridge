@@ -81,6 +81,7 @@ tracing-subscriber   = { version = "0.3", features = ["env-filter", "json", "chr
 
 # Rate limiting (token bucket for broker API rate limits)
 governor = "0.7"
+nonzero_ext = "0.3"
 
 # CSV parsing (symbol import)
 csv = "1"
@@ -94,7 +95,7 @@ uuid        = { version = "1", features = ["v4", "serde"] }
 once_cell   = "1"
 async-trait = "0.1"
 bytes       = "1"
-parking_lot = "1"
+parking_lot = "0.12"
 dashmap     = "6"
 indexmap    = { version = "2", features = ["serde"] }
 

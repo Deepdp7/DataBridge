@@ -4,6 +4,7 @@
 /// a single shared handle. It is created once at startup and injected
 /// into the Tauri state and all core engine modules.
 
+pub mod credentials;
 pub mod repository;
 pub mod sqlite;
 

@@ -168,6 +168,23 @@ impl std::fmt::Display for SyncStatus {
     }
 }
 
+impl std::str::FromStr for SyncStatus {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "not_started" => Ok(SyncStatus::NotStarted),
+            "queued"      => Ok(SyncStatus::Queued),
+            "downloading" => Ok(SyncStatus::Downloading),
+            "processing"  => Ok(SyncStatus::Processing),
+            "completed"   => Ok(SyncStatus::Completed),
+            "partial"     => Ok(SyncStatus::Partial),
+            "failed"      => Ok(SyncStatus::Failed),
+            "retrying"    => Ok(SyncStatus::Retrying),
+            _ => Err(format!("Unknown sync status: {}", s)),
+        }
+    }
+}
+
 /// Symbol as returned by a BrokerAdapter from `get_symbol_master()`.
 /// Adapter-specific; the Data Normalizer maps this into `Symbol` + `SymbolMapping`.
 #[derive(Debug, Clone)]

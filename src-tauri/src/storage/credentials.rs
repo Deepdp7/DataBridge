@@ -26,11 +26,11 @@ pub trait CredentialStore: Send + Sync {
 #[cfg(target_os = "windows")]
 pub mod windows_impl {
     use super::*;
-    use windows::core::PCWSTR;
+    use windows::core::{PCWSTR, PWSTR};
     use windows::Win32::Foundation::ERROR_NOT_FOUND;
     use windows::Win32::Security::Credentials::{
         CredDeleteW, CredReadW, CredWriteW, CREDENTIALW, CRED_TYPE_GENERIC,
-        CREDENTIAL_ATTRIBUTEW,
+        CREDENTIAL_ATTRIBUTEW, CRED_FLAGS,
     };
 
     pub struct WindowsCredentialStore;
@@ -49,23 +49,23 @@ pub mod windows_impl {
 
     impl CredentialStore for WindowsCredentialStore {
         fn save(&self, target: &str, username: &str, secret: &str) -> Result<()> {
-            let target_wide = Self::to_wide(target);
-            let username_wide = Self::to_wide(username);
+            let mut target_wide = Self::to_wide(target);
+            let mut username_wide = Self::to_wide(username);
             let secret_bytes = secret.as_bytes();
 
             let cred = CREDENTIALW {
-                Flags: 0,
+                Flags: CRED_FLAGS(0),
                 Type: CRED_TYPE_GENERIC,
-                TargetName: PCWSTR(target_wide.as_ptr()),
-                Comment: PCWSTR::null(),
+                TargetName: PWSTR(target_wide.as_mut_ptr()),
+                Comment: PWSTR::null(),
                 LastWritten: Default::default(),
                 CredentialBlobSize: secret_bytes.len() as u32,
                 CredentialBlob: secret_bytes.as_ptr() as *mut u8,
                 Persist: windows::Win32::Security::Credentials::CRED_PERSIST_LOCAL_MACHINE,
                 AttributeCount: 0,
                 Attributes: std::ptr::null_mut::<CREDENTIAL_ATTRIBUTEW>(),
-                TargetAlias: PCWSTR::null(),
-                UserName: PCWSTR(username_wide.as_ptr()),
+                TargetAlias: PWSTR::null(),
+                UserName: PWSTR(username_wide.as_mut_ptr()),
             };
 
             unsafe {
@@ -84,7 +84,7 @@ pub mod windows_impl {
                 CredReadW(
                     PCWSTR(target_wide.as_ptr()),
                     CRED_TYPE_GENERIC,
-                    0,
+                    Some(0),
                     &mut pcred,
                 )
                 .map_err(|e| {
@@ -108,7 +108,7 @@ pub mod windows_impl {
         fn delete(&self, target: &str) -> Result<()> {
             let target_wide = Self::to_wide(target);
             unsafe {
-                let result = CredDeleteW(PCWSTR(target_wide.as_ptr()), CRED_TYPE_GENERIC, 0);
+                let result = CredDeleteW(PCWSTR(target_wide.as_ptr()), CRED_TYPE_GENERIC, Some(0));
                 match result {
                     Ok(_) => Ok(()),
                     Err(e) if e.code() == ERROR_NOT_FOUND.into() => Ok(()), // already gone

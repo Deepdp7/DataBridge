@@ -85,11 +85,10 @@ impl SymbolRepository for SqliteSymbolRepository {
     }
 
     async fn get_symbol_by_id(&self, id: i64) -> Result<Option<Symbol>> {
-        let row = sqlx::query_as!(
-            SymbolRow,
-            "SELECT * FROM symbols WHERE id = ?",
-            id
+        let row = sqlx::query_as::<_, SymbolRow>(
+            "SELECT * FROM symbols WHERE id = ?"
         )
+        .bind(id)
         .fetch_optional(&self.pool)
         .await
         .map_err(AppError::Database)?;
@@ -97,11 +96,11 @@ impl SymbolRepository for SqliteSymbolRepository {
     }
 
     async fn get_symbol_by_key(&self, symbol: &str, exchange: &str) -> Result<Option<Symbol>> {
-        let row = sqlx::query_as!(
-            SymbolRow,
-            "SELECT * FROM symbols WHERE symbol = ? AND exchange = ? LIMIT 1",
-            symbol, exchange
+        let row = sqlx::query_as::<_, SymbolRow>(
+            "SELECT * FROM symbols WHERE symbol = ? AND exchange = ? LIMIT 1"
         )
+        .bind(symbol)
+        .bind(exchange)
         .fetch_optional(&self.pool)
         .await
         .map_err(AppError::Database)?;
@@ -169,7 +168,8 @@ impl SymbolRepository for SqliteSymbolRepository {
 
     async fn count_symbols(&self, status: Option<SymbolStatus>) -> Result<i64> {
         let count = if let Some(s) = status {
-            sqlx::query_scalar!("SELECT COUNT(*) FROM symbols WHERE status = ?", s.to_string())
+            let status_str = s.to_string();
+            sqlx::query_scalar!("SELECT COUNT(*) FROM symbols WHERE status = ?", status_str)
                 .fetch_one(&self.pool)
                 .await
                 .map_err(AppError::Database)?
@@ -183,9 +183,11 @@ impl SymbolRepository for SqliteSymbolRepository {
     }
 
     async fn set_symbol_status(&self, id: i64, status: SymbolStatus) -> Result<()> {
+        let status_str = status.to_string();
+        let now_str = Utc::now().to_rfc3339();
         sqlx::query!(
             "UPDATE symbols SET status = ?, updated_at = ? WHERE id = ?",
-            status.to_string(), Utc::now().to_rfc3339(), id
+            status_str, now_str, id
         )
         .execute(&self.pool)
         .await
@@ -397,9 +399,10 @@ impl HistoricalRepository for SqliteHistoricalRepository {
     }
 
     async fn count_bars(&self, symbol_id: i64, interval: Interval) -> Result<i64> {
+        let iv_str = interval.as_str();
         let count = sqlx::query_scalar!(
             "SELECT COUNT(*) FROM historical_bars WHERE symbol_id = ? AND interval = ?",
-            symbol_id, interval.as_str()
+            symbol_id, iv_str
         )
         .fetch_one(&self.pool)
         .await
@@ -622,7 +625,7 @@ impl SettingsRepository for SqliteSettingsRepository {
             .fetch_all(&self.pool)
             .await
             .map_err(AppError::Database)?;
-        Ok(rows.into_iter().map(|r| (r.key, r.value)).collect())
+        Ok(rows.into_iter().map(|r| (r.key.unwrap_or_default(), r.value)).collect())
     }
 
     async fn delete(&self, key: &str) -> Result<()> {
@@ -760,7 +763,7 @@ impl BrokerRepository for SqliteBrokerRepository {
         .map_err(AppError::Database)?;
 
         Ok(row.map(|r| BrokerRow {
-            id: r.id,
+            id: r.id.unwrap_or_default(),
             broker_key: r.broker_key,
             display_name: r.display_name,
             api_base_url: r.api_base_url,

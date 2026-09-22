@@ -34,6 +34,22 @@ pub trait BrokerAdapter: Send + Sync {
     /// only the `credential_ref` key used to retrieve it later.
     async fn authenticate(&self, creds: &BrokerCredentials) -> Result<Session, BrokerError>;
 
+    /// For OAuth 2.0 brokers, generate the authorization URL to open in the user's browser.
+    /// Returns `None` if the broker does not use browser-based OAuth.
+    fn get_auth_url(&self, creds: &BrokerCredentials, state: &str) -> Option<String> {
+        None
+    }
+
+    /// For OAuth 2.0 brokers, exchange the received authorization code for a session/access token.
+    async fn exchange_auth_code(
+        &self,
+        creds: &BrokerCredentials,
+        code: &str,
+        state: &str,
+    ) -> Result<Session, BrokerError> {
+        Err(BrokerError::AuthenticationFailed("Broker does not support OAuth".to_string()))
+    }
+
     /// Attempt to refresh an existing session (e.g. using a refresh token).
     /// Returns an updated `Session` with a new `credential_ref` on success.
     /// Returns `BrokerError::SessionExpired` if refresh is not possible.

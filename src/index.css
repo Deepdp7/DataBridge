@@ -21,7 +21,7 @@ body {
   background-color: hsl(220, 13%, 9%);
   color: hsl(220, 13%, 95%);
   font-family: 'Inter', system-ui, sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -73,13 +73,13 @@ body {
 .db-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 13px;
 }
 .db-table th {
   background: hsl(220, 13%, 11%);
   color: hsl(220, 10%, 55%);
   font-weight: 500;
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 6px 10px;
@@ -117,7 +117,7 @@ body {
   gap: 5px;
   padding: 4px 12px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.1s, opacity 0.1s;
@@ -162,7 +162,7 @@ body {
   border: 1px solid hsl(220, 13%, 24%);
   border-radius: 4px;
   color: hsl(220, 13%, 90%);
-  font-size: 12px;
+  font-size: 13px;
   padding: 5px 9px;
   outline: none;
   width: 100%;
@@ -183,7 +183,7 @@ body {
   border: 1px solid hsl(220, 13%, 24%);
   border-radius: 4px;
   color: hsl(220, 13%, 90%);
-  font-size: 12px;
+  font-size: 13px;
   padding: 5px 28px 5px 9px;
   outline: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23677' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -201,7 +201,7 @@ body {
   align-items: center;
   padding: 1px 7px;
   border-radius: 10px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -215,7 +215,7 @@ body {
 /* ── Numeric values (monospace) ─────────────────────────────── */
 .num {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: -0.02em;
 }
 
@@ -226,7 +226,7 @@ body {
   gap: 8px;
   padding: 7px 12px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: hsl(220, 10%, 58%);
   cursor: pointer;
@@ -306,7 +306,7 @@ body {
   background: hsl(220, 13%, 22%);
   border: 1px solid hsl(220, 13%, 30%);
   color: hsl(220, 13%, 88%);
-  font-size: 11px;
+  font-size: 12px;
   padding: 3px 8px;
   border-radius: 4px;
   white-space: nowrap;

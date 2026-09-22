@@ -3,6 +3,7 @@
 pub mod adapter;
 pub mod error;
 pub mod mock;
+pub mod fyers;
 pub mod registry;
 pub mod types;
 

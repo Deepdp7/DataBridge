@@ -11,6 +11,66 @@ import { StatusIndicator } from '../components/StatusIndicator';
 import { ProgressBar } from '../components/ProgressBar';
 import { Badge, statusBadge } from '../components/Badge';
 
+function HealthCheckPanel() {
+  const { runHealthCheck } = useAppStore();
+  const [health, setHealth] = useState<any>(null);
+  const [checking, setChecking] = useState(false);
+
+  const doCheck = async () => {
+    setChecking(true);
+    try {
+      const res = await runHealthCheck();
+      setHealth(res);
+    } catch (e) {
+      alert(`Health check failed: ${e}`);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  return (
+    <div className="panel p-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-xs font-medium text-text-muted uppercase tracking-wide">Diagnostics & Test Panel</div>
+        <button className="btn btn-primary !py-1 text-xs" onClick={doCheck} disabled={checking}>
+          {checking ? 'Checking...' : 'Run Diagnostics'}
+        </button>
+      </div>
+      
+      {health ? (
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <div className="text-xs text-text-muted mb-1">SQLite Storage</div>
+            <Badge color={health.sqlite ? 'green' : 'red'}>{health.sqlite ? 'Passed' : 'Failed'}</Badge>
+          </div>
+          <div>
+            <div className="text-xs text-text-muted mb-1">FYERS REST API</div>
+            <Badge color={health.rest ? 'green' : 'red'}>{health.rest ? 'Connected' : 'Failed'}</Badge>
+          </div>
+          <div>
+            <div className="text-xs text-text-muted mb-1">Historical Backfill</div>
+            <Badge color={health.historical ? 'green' : 'red'}>{health.historical ? 'Passed' : 'Failed'}</Badge>
+          </div>
+          <div>
+            <div className="text-xs text-text-muted mb-1">FYERS WebSocket</div>
+            <Badge color={health.websocket ? 'green' : 'red'}>{health.websocket ? 'Connected' : 'Failed'}</Badge>
+          </div>
+          <div>
+            <div className="text-xs text-text-muted mb-1">Live Tick Engine</div>
+            <Badge color={health.live ? 'green' : 'red'}>{health.live ? 'Passed' : 'Failed'}</Badge>
+          </div>
+          <div>
+            <div className="text-xs text-text-muted mb-1">AmiBroker IPC</div>
+            <Badge color={health.ipc ? 'green' : 'red'}>{health.ipc ? 'Connected' : 'Disconnected'}</Badge>
+          </div>
+        </div>
+      ) : (
+        <div className="text-xs text-text-muted italic">Click "Run Diagnostics" to test system health.</div>
+      )}
+    </div>
+  );
+}
+
 export function Dashboard() {
   const { status, backfillStatus, tickStats, fetchStatus, fetchBackfillStatus, fetchTickStats } =
     useAppStore();
@@ -139,6 +199,9 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Health Check Panel */}
+      <HealthCheckPanel />
 
       {/* Active broker */}
       {status && (

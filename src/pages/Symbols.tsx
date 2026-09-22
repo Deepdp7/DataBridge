@@ -10,7 +10,7 @@ import { Badge } from '../components/Badge';
 import { Modal } from '../components/Modal';
 
 export function Symbols() {
-  const { symbols, symbolsLoading, fetchSymbols, enableSymbol, disableSymbol, removeSymbol, triggerBackfill, importCsv } = useAppStore();
+  const { symbols, symbolsLoading, fetchSymbols, enableSymbol, disableSymbol, removeSymbol, triggerBackfill } = useAppStore();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
 

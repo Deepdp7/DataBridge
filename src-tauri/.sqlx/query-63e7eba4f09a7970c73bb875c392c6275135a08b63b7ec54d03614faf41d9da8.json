@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, broker_key, display_name, api_base_url, ws_base_url, is_active FROM brokers",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "broker_key",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "display_name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "api_base_url",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "ws_base_url",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_active",
+        "ordinal": 5,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "63e7eba4f09a7970c73bb875c392c6275135a08b63b7ec54d03614faf41d9da8"
+}

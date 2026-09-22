@@ -71,7 +71,7 @@ pub struct LiveTickEngine {
     pub tick_out_tx: mpsc::Sender<Tick>,
     tick_out_rx: Arc<Mutex<Option<mpsc::Receiver<Tick>>>>,
     cmd_tx: mpsc::Sender<LiveTickCommand>,
-    cmd_rx: Arc<Mutex<mpsc::Receiver<LiveTickCommand>>>,
+    cmd_rx: Arc<tokio::sync::Mutex<mpsc::Receiver<LiveTickCommand>>>,
     pub stats: Arc<Mutex<TickStats>>,
     subscribed_tokens: Arc<Mutex<HashSet<String>>>,
     ws_state_tx: watch::Sender<WsConnectionState>,
@@ -90,7 +90,7 @@ impl LiveTickEngine {
             tick_out_tx,
             tick_out_rx: Arc::new(Mutex::new(Some(tick_out_rx))),
             cmd_tx,
-            cmd_rx: Arc::new(Mutex::new(cmd_rx)),
+            cmd_rx: Arc::new(tokio::sync::Mutex::new(cmd_rx)),
             stats: Arc::new(Mutex::new(TickStats::default())),
             subscribed_tokens: Arc::new(Mutex::new(HashSet::new())),
             ws_state_tx,
@@ -178,7 +178,7 @@ impl LiveTickEngine {
         // For now, since WsHandle owns the sender, we poll via a small sleep loop
         // and check cmd_rx for control messages.
 
-        let mut cmd_rx = self.cmd_rx.lock();
+        let mut cmd_rx = self.cmd_rx.lock().await;
         let mut heartbeat_ticker = tokio::time::interval(Duration::from_secs(30));
 
         loop {

@@ -79,3 +79,37 @@ pub async fn get_logs(
     let logs = state.storage.logs.query_logs(&filter).await.unwrap_or_default();
     Json(json!(logs))
 }
+
+pub async fn get_history(
+    State(state): State<Arc<IpcState>>,
+    axum::extract::Path(symbol): axum::extract::Path<String>,
+) -> Json<Value> {
+    use crate::models::Interval;
+    use chrono::{Utc, TimeZone};
+    
+    // Look up the symbol id
+    let symbols = state.storage.symbols.list_symbols(&SymbolFilter::default()).await.unwrap_or_default();
+    if let Some(sym) = symbols.into_iter().find(|s| s.symbol == symbol) {
+        // Fetch bars
+        let from = Utc.timestamp_opt(0, 0).unwrap();
+        let to = Utc::now();
+        if let Ok(bars) = state.storage.historical.query_bars(sym.id, Interval::OneMinute, from, to).await {
+            // Map to JSON
+            let mut result = Vec::new();
+            for b in bars {
+                result.push(json!({
+                    "timestamp": b.timestamp.to_rfc3339(),
+                    "open": b.open,
+                    "high": b.high,
+                    "low": b.low,
+                    "close": b.close,
+                    "volume": b.volume,
+                    "open_int": b.open_int
+                }));
+            }
+            return Json(json!(result));
+        }
+    }
+    
+    Json(json!([]))
+}

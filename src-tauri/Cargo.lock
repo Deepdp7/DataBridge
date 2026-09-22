@@ -39,6 +39,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
+name = "amibroker-plugin"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "once_cell",
+ "parking_lot",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "tungstenite 0.24.0",
+ "url",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3821,6 +3837,7 @@ checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
 dependencies = [
  "base64 0.22.1",
  "bytes",
+ "futures-channel",
  "futures-core",
  "futures-util",
  "http",
@@ -5715,6 +5732,7 @@ dependencies = [
  "sha1",
  "thiserror 1.0.69",
  "utf-8",
+ "webpki-roots 0.26.11",
 ]
 
 [[package]]

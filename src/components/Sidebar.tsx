@@ -2,7 +2,7 @@
  * Sidebar navigation — PRD §18 pages
  */
 
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { StatusIndicator } from './StatusIndicator';
 

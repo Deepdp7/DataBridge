@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM historical_bars WHERE symbol_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "64ea930c0fbd555e30be8fbb555bddff89e82d7bfa53fb40857451ff9fef55c1"
+}

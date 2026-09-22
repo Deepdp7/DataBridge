@@ -156,19 +156,21 @@ These are documented in detail in Section 23 (MVP Scope) and Section 24 (Future 
 ## 9. Functional Requirements
 
 ### 9.1 Broker Authentication
-- FR-1: The system shall support storing API key, client/user ID, and access/session token per broker configuration.
-- FR-2: Credentials shall be stored using OS-level secure storage (Windows Credential Manager / DPAPI) rather than plain text where technically feasible.
+- FR-1: The system shall support automatic OAuth 2.0 authorization flows (e.g., FYERS V3). It shall check for a valid session on startup; if none exists, it shall automatically open the broker's login page in the user's default browser, handle the callback redirect, exchange the auth code for an access token, and auto-connect.
+- FR-2: Credentials (access tokens, session tokens) shall be stored using OS-level secure storage (Windows Credential Manager / DPAPI) rather than plain text where technically feasible. The user shall not be required to manually paste access tokens.
 - FR-3: The system shall validate session validity on startup and periodically thereafter.
-- FR-4: The system shall detect token expiry and attempt automated re-authentication where the broker API supports it; otherwise it shall prompt the user.
+- FR-4: The system shall detect token expiry and attempt automated re-authentication where the broker API supports it.
 - FR-5: Authentication errors shall be surfaced with a clear, user-readable reason (not a raw API error dump).
 - FR-6: Credentials and tokens shall never be written to standard application logs.
+- FR-6b: Upon successful authorization, the system shall immediately and automatically synchronize the latest broker symbol master.
 
 ### 9.2 Symbol Management
-- FR-7: Users shall be able to add symbols manually with symbol, exchange, and token/instrument ID.
-- FR-8: Users shall be able to import symbols via CSV (columns: `symbol,exchange,token`, extensible for instrument type/expiry/strike/option type).
-- FR-9: The system shall validate every CSV row per the rules in Section 12.2 and produce an import summary (total/valid/duplicate/invalid/imported/skipped).
-- FR-10: Users shall be able to enable/disable, remove, and search/filter symbols by exchange or status.
-- FR-11: Each symbol shall display its historical sync status and live subscription status.
+- FR-7: Users shall be able to add symbols manually. The system shall support automatic Symbol Master Synchronization, downloading the latest symbol master from the broker, detecting added/removed/expired/changed instruments, and updating token mappings automatically without manual token entry.
+- FR-8: Users shall be able to import and export symbols via CSV (columns: `symbol, exchange, segment, token, instrument_type, expiry, strike, option_type, enabled`). The export format must be stable for re-import.
+- FR-9: The system shall validate every CSV row during import, checking for duplicates, and produce an import summary (total/valid/duplicate/invalid/imported/skipped) and report invalid rows clearly.
+- FR-10: Users shall be able to enable/disable, remove, edit, and search/filter symbols by exchange, segment, or status.
+- FR-11: Each symbol shall display its historical sync status and live subscription status. The Symbol Setup page shall also display the last symbol master sync time, sync status, instrument counts, and a manual "Sync Now" button.
+- FR-11b: The system shall support specific instrument segments: EQ.NSE, FUTSTK.NFO, FUTIDX.NFO, OPTIDX.NFO, OPTSTK.NFO, COMDTY.MCX, FUTCOM.MCX, FUTIDX.MCX, OPTFUT.MCX, OPTIDX.MCX, mapped correctly to broker-specific identifiers using a normalized internal segment model.
 
 ### 9.3 Historical Backfill
 - FR-12: On symbol add/enable, the system shall automatically enqueue a 1-year, 1-minute OHLCV backfill job.
@@ -180,22 +182,22 @@ These are documented in detail in Section 23 (MVP Scope) and Section 24 (Future 
 
 ### 9.4 Live Tick Engine
 - FR-18: The system shall connect to the broker's WebSocket feed and subscribe to all enabled symbols during market hours.
-- FR-19: Ticks shall be normalized into the internal Tick model (Section 15) with nullable fields for broker-unsupported attributes.
+- FR-19: Ticks shall be normalized into the internal Tick model (Section 15) and processed in a non-blocking pipeline with bounded queues to prevent memory issues.
 - FR-20: The system shall automatically reconnect on WebSocket disconnect and resubscribe all previously subscribed symbols.
 - FR-21: The system shall maintain a heartbeat/ping-pong cycle per broker protocol requirements.
-- FR-22: The system shall track and expose tick-processing statistics (ticks/sec, total ticks, last tick time).
+- FR-22: The system shall track and expose tick-processing statistics (ticks/sec, 1-second bars/sec, dropped ticks, duplicate ticks, processing latency, queue depth) to ensure sufficient performance.
 
 ### 9.5 Tick-to-Bar Aggregation
-- FR-23: The system shall aggregate incoming ticks into 1-minute OHLCV bars in real time.
-- FR-24: The aggregation engine shall correctly handle first-tick-of-minute, high/low/close updates, volume accumulation, missing ticks, and market session boundaries.
-- FR-25: The bar aggregation engine's internal design shall support future extension to additional intervals (5s, 5m, 15m, etc.) without a redesign.
+- FR-23: The system shall aggregate incoming ticks into **1-second** and **1-minute** OHLCV bars in real time. The 1-second bars must be generated purely from real-time ticks.
+- FR-24: The aggregation engine shall correctly handle first-tick-of-interval, high/low/close updates, volume accumulation, missing ticks, and market session boundaries, prioritizing minimal allocations in the hot tick path.
+- FR-25: The 1-second bars shall be efficiently batched and pushed to AmiBroker, supporting smooth 1-second charting.
 
 ### 9.6 AmiBroker Integration
 - FR-26: The system shall provide a native Data Plugin DLL (`DataBridge.dll`) built against the AmiBroker ADK.
-- FR-27: The plugin shall retrieve historical data from DataBridge Core (not directly from any broker API).
-- FR-28: The plugin shall receive real-time updates from DataBridge Core via local IPC and push them into AmiBroker.
+- FR-27: The plugin shall retrieve historical data from DataBridge Core.
+- FR-28: The plugin shall receive real-time 1-second and 1-minute updates from DataBridge Core via local IPC and push them into AmiBroker efficiently.
 - FR-29: The plugin shall handle unknown/unmapped symbols gracefully with a clear "symbol not found" state.
-- FR-30: The plugin shall detect and report loss of connection to DataBridge Core distinctly from loss of broker connectivity.
+- FR-30: The user must be able to select the AmiBroker Plugins folder during setup and install the DLL automatically.
 
 ### 9.7 Recovery
 - FR-31: The system shall automatically recover from internet loss, API timeout, WebSocket disconnect, session expiry, application restart, unexpected crash, partial historical download, database write failure, and AmiBroker plugin disconnect, per the flows in Section 22.
@@ -475,9 +477,25 @@ DataBridge.dll → AmiBroker
 
 ---
 
-## 15. Internal Tick & Bar Models
+## 15. Internal Tick, Bar, and Segment Models
 
-### 15.1 Tick
+### 15.1 Segment Model
+
+```text
+Segment
+- exchange
+- segment              (e.g., EQ.NSE, FUTSTK.NFO)
+- instrument_type
+- symbol
+- broker_token
+- expiry               (nullable)
+- strike               (nullable)
+- option_type          (nullable)
+- lot_size
+- tick_size
+```
+
+### 15.2 Tick
 
 ```text
 Tick
@@ -500,13 +518,13 @@ Tick
 
 Fields not supported by a given broker are always `null`, never a sentinel value like `0`.
 
-### 15.2 Bar (OHLCV)
+### 15.3 Bar (OHLCV)
 
 ```text
 Bar
 - symbol
 - exchange
-- interval            (e.g. "1m")
+- interval            (e.g., "1s", "1m")
 - timestamp           (bar open time, UTC)
 - open
 - high
@@ -516,8 +534,8 @@ Bar
 - source              ("backfill" | "live_aggregation")
 ```
 
-### 15.3 Tick-to-Bar Aggregation Engine
-Supports (infrastructure-level) intervals: tick, 1s, 5s, 1m, 5m, 15m, 30m, 1h, daily. MVP activates only **tick → 1-minute**.
+### 15.4 Tick-to-Bar Aggregation Engine
+Supports (infrastructure-level) intervals: tick, 1s, 5s, 1m, 5m, 15m, 30m, 1h, daily. MVP activates **tick → 1-second → 1-minute**.
 
 State machine per symbol:
 ```text

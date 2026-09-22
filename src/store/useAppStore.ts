@@ -112,6 +112,9 @@ interface AppStore {
   fetchLogs: (filter?: { level?: string; module?: string }) => Promise<void>;
   fetchTickStats: () => Promise<void>;
   fetchSettings: () => Promise<void>;
+  startLiveFeed: () => Promise<void>;
+  stopLiveFeed: () => Promise<void>;
+  runHealthCheck: () => Promise<any>;
 
   addSymbol: (symbol: string, exchange: string, token: string) => Promise<void>;
   removeSymbol: (id: number) => Promise<void>;
@@ -240,6 +243,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
       apiSecret,
       extra: {},
     });
+  },
+
+  startLiveFeed: async () => {
+    await invoke('start_live_feed');
+  },
+
+  stopLiveFeed: async () => {
+    await invoke('stop_live_feed');
+  },
+
+  runHealthCheck: async () => {
+    return await invoke('run_health_check');
   },
 
   clearError: () => set({ lastError: null }),

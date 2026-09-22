@@ -39,6 +39,7 @@ pub struct AppState {
     pub broker_registry: Arc<RwLock<BrokerRegistry>>,
     pub credential_store: Arc<dyn CredentialStore>,
     pub active_broker_id: String,
+    pub live_engine: Arc<tokio::sync::Mutex<Option<Arc<crate::websocket::LiveTickEngine>>>>,
 }
 
 /// Tauri application entry point.
@@ -81,7 +82,8 @@ pub fn run() {
 
                 // Build broker registry
                 let mut registry = BrokerRegistry::new();
-                registry.register(Arc::new(MockBrokerAdapter::new()));
+                registry.register(Arc::new(crate::broker::mock::MockBrokerAdapter::new()));
+                registry.register(Arc::new(crate::broker::fyers::FyersAdapter::new()));
                 let registry = Arc::new(RwLock::new(registry));
 
                 // Build credential store (Windows Credential Manager)
@@ -98,6 +100,7 @@ pub fn run() {
                     broker_registry: registry,
                     credential_store,
                     active_broker_id,
+                    live_engine: Arc::new(tokio::sync::Mutex::new(None)),
                 };
 
                 // Register Tauri state
@@ -155,6 +158,8 @@ pub fn run() {
             // Live
             commands::live::get_live_status,
             commands::live::get_tick_stats,
+            commands::live::start_live_feed,
+            commands::live::stop_live_feed,
             // Logs
             commands::logs::get_logs,
             commands::logs::clear_logs,
@@ -166,6 +171,7 @@ pub fn run() {
             commands::system::get_system_status,
             commands::system::set_start_with_windows,
             commands::system::get_ipc_port,
+            commands::system::run_health_check,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

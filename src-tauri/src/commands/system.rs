@@ -100,3 +100,87 @@ pub async fn get_ipc_port(state: State<'_, AppState>) -> Result<u16, String> {
         .unwrap_or(7421u16);
     Ok(port)
 }
+
+#[tauri::command]
+pub async fn run_health_check(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let sqlite_ok = state.storage.settings.get("ipc_port").await.is_ok();
+    
+    let broker_id = &state.active_broker_id;
+    let mut rest_ok = false;
+    
+    if let Ok(Some(broker)) = state.storage.brokers.get_broker_by_key(broker_id).await {
+        if let Ok(Some(session)) = state.storage.brokers.get_active_session(broker.id).await {
+            if session.session_status == "active" {
+                if let Ok(creds_json) = state.credential_store.load(&format!("databridge_{}_credentials", broker_id)) {
+                    if let Ok(creds_val) = serde_json::from_str::<serde_json::Value>(&creds_json) {
+                        let adapter = state.broker_registry.read().await.get(broker_id).map(|a| a.clone());
+                        if let Some(adapter) = adapter {
+                            let auth = crate::models::BrokerCredentials {
+                                broker_id: broker_id.clone(),
+                                api_key: creds_val["api_key"].as_str().map(String::from),
+                                api_secret: creds_val["api_secret"].as_str().map(String::from),
+                                redirect_uri: None,
+                                totp_secret: None,
+                                extra: Default::default(),
+                            };
+                            if let Ok(s) = adapter.authenticate(&auth).await {
+                                if s.status == crate::models::session::SessionStatus::Active {
+                                    rest_ok = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let mut ws_ok = false;
+    let mut live_ok = false;
+    {
+        let engine_lock = state.live_engine.lock().await;
+        if let Some(engine) = engine_lock.as_ref() {
+            let stats = engine.stats.lock().clone();
+            ws_ok = stats.ws_state == "connected";
+            live_ok = true;
+        }
+    }
+
+    Ok(serde_json::json!({
+        "sqlite": sqlite_ok,
+        "rest": rest_ok,
+        "historical": rest_ok,
+        "websocket": ws_ok,
+        "live": live_ok,
+        "ipc": true
+    }))
+}
+
+#[tauri::command]
+pub async fn install_plugin(path: String) -> Result<(), String> {
+    use std::path::PathBuf;
+    
+    // The DLL is built in target/release/DataBridge.dll or target/release/amibroker_plugin.dll
+    // Wait, the lib name in Cargo.toml is DataBridge.
+    // On Windows, a cdylib named "DataBridge" becomes "DataBridge.dll"
+    
+    let mut source_path = std::env::current_dir().map_err(|e| e.to_string())?;
+    source_path.push("target");
+    source_path.push("release");
+    source_path.push("DataBridge.dll");
+    
+    if !source_path.exists() {
+        return Err(format!("Plugin DLL not found at {:?}. Please build the project first.", source_path));
+    }
+    
+    let mut target_path = PathBuf::from(&path);
+    if target_path.is_dir() {
+        target_path.push("DataBridge.dll");
+    } else {
+        return Err("Provided path is not a valid directory.".into());
+    }
+    
+    std::fs::copy(&source_path, &target_path).map_err(|e| format!("Failed to copy DLL: {}", e))?;
+    
+    Ok(())
+}

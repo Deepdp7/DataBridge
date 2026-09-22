@@ -65,6 +65,7 @@ fn build_router(state: IpcState) -> Router {
         .route("/backfill/status",     get(rest::get_backfill_status))
         .route("/live/status",         get(rest::get_live_status))
         .route("/logs",                get(rest::get_logs))
+        .route("/history/:symbol",     get(rest::get_history))
         // WebSocket streaming (PRD §20.2)
         .route("/ws",                  get(ws::ws_handler))
         .with_state(Arc::new(state))
